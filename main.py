@@ -1,5 +1,7 @@
 import sys
 from pathlib import Path
+from enum import Enum
+import subprocess
 
 from PyPDF2 import PdfFileMerger
 from PyPDF2.pagerange import PageRange
@@ -10,7 +12,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTextEdit,
                             QSizePolicy, QScrollArea, QHBoxLayout, 
                             QPushButton, QVBoxLayout, QWidget, 
                             QLabel, QLineEdit, QDesktopWidget,
-                            QFrame, QToolBar, QMessageBox, QDialog)
+                            QFrame, QToolBar, QMessageBox, QDialog,
+                            QComboBox)
 
 from qttools import layout_items
 
@@ -50,7 +53,7 @@ class ApplicationWindow(QMainWindow):
         '''
         app = QApplication.instance()
         if app is None:
-            raise RuntimeError("No Qt Application found.")
+            raise RuntimeError('No Qt Application found.')
 
         file = QFile(path)
         file.open(QFile.ReadOnly | QFile.Text)
@@ -92,12 +95,22 @@ class ApplicationWindow(QMainWindow):
             pdf.resetcolor()
 
 
+    def rotation_required(self):
+        '''
+        checks if rotation of any pages is required
+        '''
+        reqd = True
+        for pdf in self.pdfs():
+            if not doc.rotation == Rotations.NONE:
+                reqd = False
+        return reqd
+
+
     def pdfs(self):
         '''
         generator for the pdf documents in the applicaiton
         '''
-        for i in range(0, self.ui.docframe.layout().count()):
-            widget = self.ui.docframe.layout().itemAt(i).widget()
+        for widget in layout_items(self.ui.docframe.layout()):
             if type(widget) is PdfDocument:
                 yield(widget)
 
@@ -124,11 +137,15 @@ class ApplicationWindow(QMainWindow):
                 print(e.args)
 
             if valid:
-                merger.append(fileobj=fp, pages=pg)
+                merger.append(fileobj=fp, pages=pg, rotation=pdf.rotation)
+
 
         try:
             with open('output.pdf', 'wb') as output:
                 merger.write(output)
+                if len(merger.pages) > 0:
+                    subprocess.Popen('output.pdf', shell=True)
+
         except PermissionError:
             print('close the file you bafoon')
 
@@ -176,7 +193,6 @@ class ApplicationWindow(QMainWindow):
         self.ui.mainwidget = QWidget()
         self.ui.mainlayout = QVBoxLayout(self.ui.mainwidget)
         self.setCentralWidget(self.ui.mainwidget)
-
 
         # make the scroll area
         self.ui.docscroll = QScrollArea()
@@ -227,7 +243,14 @@ class CustomMessageBox(QDialog):
 
     def setText(self, txt):
         self.textEdit.setText(txt)
-        
+
+
+class Rotations(Enum):
+    NONE = 0
+    LEFT = 90
+    RIGHT = 270
+    UPSIDEDOWN = 180
+    
 
 class PdfDocument(QWidget):
 
@@ -259,11 +282,31 @@ class PdfDocument(QWidget):
         self.layout.addWidget(self.pages_label)
         self.layout.addWidget(self.pages_edit)
 
+        # rotate box
+        self.rotate_box = QComboBox()
+        self.rotate_box.addItem('None', Rotations.NONE)
+        self.rotate_box.addItem('Left 90', Rotations.LEFT)
+        self.rotate_box.addItem('Right 90', Rotations.RIGHT)
+        self.rotate_box.addItem('180', Rotations.UPSIDEDOWN)
+        self.rotate_box.activated.connect(self.set_rotation)
+
+        self.rotate_label = QLabel('&Rotation')
+        self.rotate_label.setBuddy(self.rotate_box)
+
+        self.layout.addWidget(self.rotate_label)
+        self.layout.addWidget(self.rotate_box)
+
+        self.rotation = Rotations.NONE.value
+
         # close button
         self.close_btn = QPushButton('&Delete')
         self.close_btn.clicked.connect(self.deleteLater)
         
         self.layout.addWidget(self.close_btn)
+
+
+    def set_rotation(self, index):
+        self.rotation = self.rotate_box.itemData(index).value
 
 
     @property
