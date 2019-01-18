@@ -1,0 +1,15 @@
+/*QLineEdit { background-color: yellow }*/
+
+* {
+        font-size: 20pt;
+    }
+    
+CustomMessageBox>QTextEdit {
+    font-size: 12pt;
+    /*font-family: 'Courier';*/
+    font-family: 'Consolas';
+}
+
+QLineEdit[valid_field='true'] {background-color: #42f47a}
+
+QLineEdit[valid_field='false'] {background-color: #ff8968}
