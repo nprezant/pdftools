@@ -13,4 +13,4 @@ Based on the PyPdf2 package.
 
 # Important Note
 
-In order for the rotation to work the "PdfMerger" class of the PyPdf2 package was edited (only slightly) The edited file can be found in the "PyPDF2-edits" folder.
+In order for the rotation to work the "PdfMerger" class of the PyPdf2 package was edited (only slightly). The edited file can be found in the "PyPDF2-edits" folder.

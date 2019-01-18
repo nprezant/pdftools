@@ -155,8 +155,9 @@ class ApplicationWindow(QMainWindow):
         adds a pdf widget to the pdf document layout
         '''
         doc = PdfDocument()
-        #doc.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        doc.resetcolor()
         self.ui.docframe.layout().insertWidget(self.ui.docframe.layout().count()-2, doc)
+
 
 
     def setup(self):
